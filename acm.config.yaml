@@ -1,0 +1,22 @@
+acm_custom_resources:
+  custom_policies:
+    acm:
+      action:
+        - acm:*
+        - route53:*
+      resource: '*'
+  roles:
+    CertificateValidatorResource:
+      policies_inline:
+        - cloudwatch-logs
+        - acm
+  functions:
+    CertificateValidatorCR:
+      code: acm_certificate_validator_cr.py
+      handler: acm_certificate_validator_cr.handler
+      runtime: python3.6
+      timeout: 600
+      role: CertificateValidatorResource
+      environment:
+        ENVIRONMENT_NAME:
+          Ref: EnvironmentName
