@@ -1,5 +1,8 @@
 CloudFormation do
 
+  Condition("RemoteDNSRecords", FnNot(FnEquals(Ref('CrossAccountDNSZoneIAMRole'), '')))
+
+
   cert_tags = []
   cert_tags << { Key: "Name", Value: Ref('AWS::StackName') }
   cert_tags << { Key: "Environment", Value: Ref("EnvironmentName") }

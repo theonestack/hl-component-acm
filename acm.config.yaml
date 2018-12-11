@@ -5,11 +5,20 @@ acm_custom_resources:
         - acm:*
         - route53:*
       resource: '*'
+    opsdns:
+      action: 
+        - sts:AssumeRole
+      resource:
+        - Fn::If: 
+            - RemoteDNSRecords
+            - Ref: CrossAccountDNSZoneIAMRole
+            - arn:aws:iam::123456789012:user/noaccess
   roles:
     CertificateValidatorResource:
       policies_inline:
         - cloudwatch-logs
         - acm
+        - opsdns
   functions:
     CertificateValidatorCR:
       code: acm_certificate_validator_cr.py
