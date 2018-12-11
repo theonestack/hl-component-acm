@@ -1,5 +1,10 @@
 acm_custom_resources:
   custom_policies:
+    lambda:
+      action:
+        - lambda:InvokeFunction
+      resource:
+        FnSub: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-CertificateValidatorCR*
     acm:
       action:
         - acm:*
@@ -19,6 +24,7 @@ acm_custom_resources:
         - cloudwatch-logs
         - acm
         - opsdns
+        - lambda
   functions:
     CertificateValidatorCR:
       code: acm_certificate_validator_cr.py
