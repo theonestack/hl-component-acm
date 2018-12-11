@@ -2,6 +2,7 @@ import logging
 import time
 import boto3
 import os
+import uuid
 
 log = logging.getLogger()
 log.setLevel(logging.INFO)
@@ -17,7 +18,6 @@ class AwsAcmCertValidatorLogic:
 
     def request(self, domain_name, event=None):
         log.info(f"Requesting SSL certificate {domain_name}")
-        region = boto3.Session().region_name
 
         # request certificate
         acm = boto3.client('acm', region_name=self.region)
@@ -33,7 +33,7 @@ class AwsAcmCertValidatorLogic:
 
         return cert_arn
 
-    def validate(self, cert_arn):
+    def validate(self, cert_arn, event=None):
         """
         Supports DNS validation only
         :param cert_arn:
@@ -54,12 +54,13 @@ class AwsAcmCertValidatorLogic:
         validated_domain_zone = validated_domain[validated_domain.index('.') + 1:]
         self._create_route53_record(dns_validation_record,
                                     validated_domain,
-                                    validated_domain_zone)
+                                    validated_domain_zone,
+                                    event)
         return dns_validation_record
 
-    def remove_validation_record(self, domain, dns_record):
+    def remove_validation_record(self, domain, dns_record, event=None):
         dns_zone = domain[domain.index('.') + 1:]
-        route53 = boto3.client('route53', region_name=self.region)
+        route53 = self._route53_client('event')
         hosted_zone = route53.list_hosted_zones_by_name(
             DNSName=dns_zone
         )
@@ -89,8 +90,8 @@ class AwsAcmCertValidatorLogic:
             ChangeBatch=update_request
         )
 
-    def _create_route53_record(self, dns_record, validated_domain, dns_zone):
-        route53 = boto3.client('route53', region_name=self.region)
+    def _create_route53_record(self, dns_record, validated_domain, dns_zone, event=None):
+        route53 = self._route53_client('event')
         hosted_zone = route53.list_hosted_zones_by_name(
             DNSName=dns_zone
         )
@@ -154,3 +155,31 @@ class AwsAcmCertValidatorLogic:
         # if code path made it this trough cert is validated
         log.info(f"Certificate for {cert_info['Subject']} has been successfully validated")
         return cert_arn
+
+    def _route53_client(self, event):
+        if 'CrossAccountDNSZoneIAMRole' in event:
+            route53 = self._get_session(event['CrossAccountDNSZoneIAMRole'], 'route53', self.region)
+        else:
+            route53 = boto3.client('route53', region_name=self.region)
+        return route53
+
+    def _get_session(self, role, service, region):
+        session = self._get_role_session(role_arn=role)
+        return session.client(service, region_name=region)
+
+    def _get_role_session(self, role_arn=None, sts_client=None):
+        """
+        Created a session for the specified role
+        :param role_arn: Role arn
+        :param sts_client: Optional sts client, if not specified a (cache) sts client instance is used
+        :return: Session for the specified role
+        """
+        if role_arn is not None:
+            sts = sts_client if sts_client is not None else boto3.client("sts")
+            token = sts.assume_role(RoleArn=role_arn, RoleSessionName="{}".format(str(uuid.uuid4())))
+            credentials = token["Credentials"]
+            return boto3.Session(aws_access_key_id=credentials["AccessKeyId"],
+                                aws_secret_access_key=credentials["SecretAccessKey"],
+                                aws_session_token=credentials["SessionToken"])
+        else:
+            return boto3.Session() 

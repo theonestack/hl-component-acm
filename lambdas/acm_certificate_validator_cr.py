@@ -73,7 +73,7 @@ def delete_validate_cert(domain_name, event, context):
         validation_options = cert_info['Certificate']['DomainValidationOptions'][0]
         dns_validation_record = validation_options['ResourceRecord']
         acm.delete_certificate(CertificateArn=cert_arn)
-        logic.remove_validation_record(domain_name, dns_validation_record)
+        logic.remove_validation_record(domain_name, dns_validation_record, event)
     r = cr_response.CustomResourceResponse(event)
     r.respond({'CertificateArn': event['PhysicalResourceId']})
 
@@ -85,7 +85,7 @@ def issue_validate_cert_respond(domain_name, event, context):
         validation_record = event['ValidationRecord']
     else:
         acm_certificate_arn = logic.request(domain_name=domain_name, event=event)
-        validation_record = logic.validate(cert_arn=acm_certificate_arn)
+        validation_record = logic.validate(cert_arn=acm_certificate_arn, event=event)
 
     remaining_lambda_time = (context.get_remaining_time_in_millis() / 1000) - 20
     print(f"Remaining wait secs:{remaining_lambda_time}")

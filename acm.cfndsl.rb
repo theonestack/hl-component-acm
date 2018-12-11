@@ -14,6 +14,7 @@ CloudFormation do
     Property 'ServiceToken',FnGetAtt('CertificateValidatorCR','Arn')
     Property 'AwsRegion', Ref('AWS::Region')
     Property 'DomainName', Ref('DomainName')
+    Property 'CrossAccountDNSZoneIAMRole', Ref('CrossAccountDNSZoneIAMRole')
     Property 'Tags', cert_tags
   end
 
