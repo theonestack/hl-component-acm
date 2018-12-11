@@ -157,9 +157,11 @@ class AwsAcmCertValidatorLogic:
         return cert_arn
 
     def _route53_client(self, event):
-        if 'CrossAccountDNSZoneIAMRole' in event:
-            route53 = self._get_session(event['CrossAccountDNSZoneIAMRole'], 'route53', self.region)
+        if 'CrossAccountDNSZoneIAMRole' in event['ResourceProperties']:
+            log.info(f"getting route53 session for role {event['ResourceProperties']['CrossAccountDNSZoneIAMRole']}")
+            route53 = self._get_session(event['ResourceProperties']['CrossAccountDNSZoneIAMRole'], 'route53', self.region)
         else:
+            log.info(f"getting default route53 session")
             route53 = boto3.client('route53', region_name=self.region)
         return route53
 
