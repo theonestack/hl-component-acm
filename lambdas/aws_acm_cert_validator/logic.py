@@ -60,7 +60,7 @@ class AwsAcmCertValidatorLogic:
 
     def remove_validation_record(self, domain, dns_record, event=None):
         dns_zone = domain[domain.index('.') + 1:]
-        route53 = self._route53_client('event')
+        route53 = self._route53_client(event)
         hosted_zone = route53.list_hosted_zones_by_name(
             DNSName=dns_zone
         )
@@ -91,7 +91,7 @@ class AwsAcmCertValidatorLogic:
         )
 
     def _create_route53_record(self, dns_record, validated_domain, dns_zone, event=None):
-        route53 = self._route53_client('event')
+        route53 = self._route53_client(event)
         hosted_zone = route53.list_hosted_zones_by_name(
             DNSName=dns_zone
         )
