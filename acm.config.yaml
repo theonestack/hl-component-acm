@@ -4,7 +4,7 @@ acm_custom_resources:
       action:
         - lambda:InvokeFunction
       resource:
-        FnSub: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*
+        Fn::Sub: arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}-CertificateValidatorCR*
     acm:
       action:
         - acm:*
