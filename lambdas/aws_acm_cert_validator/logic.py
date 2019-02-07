@@ -131,11 +131,10 @@ class AwsAcmCertValidatorLogic:
         acm = boto3.client('acm', region_name=self.region)
         validation_status = None
         start = time.time()
-        while validation_status is None or validation_status != 'SUCCESS':
+        while validation_status is None or validation_status != 'ISSUED':
             cert_info = acm.describe_certificate(CertificateArn=cert_arn)['Certificate']
-            validation_options = cert_info['DomainValidationOptions'][0]
-            validation_status = validation_options['ValidationStatus']
-            if validation_status != 'SUCCESS':
+            validation_status = cert_info['Status']
+            if validation_status != 'ISSUED':
                 wait_secs = time.time() - start
                 log.info(f"Max wait: {max_wait_secs}. Current wait: {wait_secs}")
                 if wait_secs >= max_wait_secs:
