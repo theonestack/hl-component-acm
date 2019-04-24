@@ -15,13 +15,20 @@ class AwsAcmCertValidatorLogic:
         log.info(f"Using {region} region")
         self.region = region
 
-    def request(self, domain_name, event=None):
+    def request(self, domain_name, alternative_names, event=None):
         log.info(f"Requesting SSL certificate {domain_name}")
         region = boto3.Session().region_name
 
         # request certificate
+        params = {
+          'DomainName': domain_name,
+          'ValidationMethod': 'DNS'
+        }
+        if alternative_names:
+          params['SubjectAlternativeNames'] = alternative_names
+
         acm = boto3.client('acm', region_name=self.region)
-        acm_response = acm.request_certificate(DomainName=domain_name, ValidationMethod='DNS')
+        acm_response = acm.request_certificate(**params)
         cert_arn = acm_response['CertificateArn']
         log.info(f"Certificate to be validated using DNS: {cert_arn}")
         if event is not None and 'Tags' in event['ResourceProperties']:
@@ -131,11 +138,10 @@ class AwsAcmCertValidatorLogic:
         acm = boto3.client('acm', region_name=self.region)
         validation_status = None
         start = time.time()
-        while validation_status is None or validation_status != 'SUCCESS':
+        while validation_status is None or validation_status != 'ISSUED':
             cert_info = acm.describe_certificate(CertificateArn=cert_arn)['Certificate']
-            validation_options = cert_info['DomainValidationOptions'][0]
-            validation_status = validation_options['ValidationStatus']
-            if validation_status != 'SUCCESS':
+            validation_status = cert_info['Status']
+            if validation_status != 'ISSUED':
                 wait_secs = time.time() - start
                 log.info(f"Max wait: {max_wait_secs}. Current wait: {wait_secs}")
                 if wait_secs >= max_wait_secs:

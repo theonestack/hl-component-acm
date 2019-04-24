@@ -5,11 +5,16 @@ acm_custom_resources:
         - acm:*
         - route53:*
       resource: '*'
+    lambda:
+      action:
+        - lambda:InvokeFunction
+      resource: '*'
   roles:
     CertificateValidatorResource:
       policies_inline:
         - cloudwatch-logs
         - acm
+        - lambda
   functions:
     CertificateValidatorCR:
       code: acm_certificate_validator_cr.py
