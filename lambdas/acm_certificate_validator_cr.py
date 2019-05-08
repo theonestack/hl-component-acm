@@ -18,6 +18,7 @@ import cr_response
 def handler(event, context):
     print(f"Received event:{json.dumps(event)}")
     domain_name = event['ResourceProperties']['DomainName']
+    alternative_names = event['ResourceProperties']['AlternativeNames']
     request_type = event['RequestType']
     if 'AwsRegion' in event['ResourceProperties']:
         os.environ['ACM_REGION'] = event['ResourceProperties']['AwsRegion']
@@ -27,7 +28,7 @@ def handler(event, context):
     try:
         if request_type == 'Create':
             # create and validate cert
-            issue_validate_cert_respond(domain_name, event, context)
+            issue_validate_cert_respond(domain_name, alternative_names, event, context)
             return
 
             # physical id should depend on domain name
@@ -38,7 +39,7 @@ def handler(event, context):
 
             if existing_domain_name != domain_name:
                 # issue new certificate with new physical id
-                issue_validate_cert_respond(domain_name, event, context)
+                issue_validate_cert_respond(domain_name, alternative_names, event, context)
                 return
             else:
                 # no changes just respond with success
@@ -77,14 +78,14 @@ def delete_validate_cert(domain_name, event, context):
     r = cr_response.CustomResourceResponse(event)
     r.respond({'CertificateArn': event['PhysicalResourceId']})
 
-def issue_validate_cert_respond(domain_name, event, context):
+def issue_validate_cert_respond(domain_name, alternative_names, event, context):
     logic = AwsAcmCertValidatorLogic()
 
     if 'WaitOnly' in event and event['WaitOnly']:
         acm_certificate_arn = event['PhysicalResourceId']
         validation_record = event['ValidationRecord']
     else:
-        acm_certificate_arn = logic.request(domain_name=domain_name, event=event)
+        acm_certificate_arn = logic.request(domain_name=domain_name, alternative_names=alternative_names, event=event)
         validation_record = logic.validate(cert_arn=acm_certificate_arn)
 
     remaining_lambda_time = (context.get_remaining_time_in_millis() / 1000) - 20
