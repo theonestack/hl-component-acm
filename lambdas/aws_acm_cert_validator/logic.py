@@ -48,8 +48,17 @@ class AwsAcmCertValidatorLogic:
         """
         log.info(f"Validating cert {cert_arn}")
         acm = boto3.client('acm', region_name=self.region)
+
         cert_info = acm.describe_certificate(CertificateArn=cert_arn)
+
+        while len(cert_info['Certificate']['DomainValidationOptions']) == 0:
+
+            log.info("DomainValidationOption not yet avaliable...waiting")
+            time.sleep(5)
+            cert_info = acm.describe_certificate(CertificateArn=cert_arn)
+
         validation_options = cert_info['Certificate']['DomainValidationOptions'][0]
+
         while 'ResourceRecord' not in validation_options:
             log.info("Waiting for validation options DNS record in response")
             time.sleep(5)
