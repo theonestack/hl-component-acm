@@ -50,11 +50,10 @@ class AwsAcmCertValidatorLogic:
         acm = boto3.client('acm', region_name=self.region)
 
         cert_info = acm.describe_certificate(CertificateArn=cert_arn)
-        log.info(cert_info)
 
         while 'DomainValidationOptions' not in cert_info['Certificate']:
 
-            log.info("DomainValidationOption not yet avaliable...waiting")
+            log.info("Waiting for validation options to be present in certificate")
             time.sleep(5)
             cert_info = acm.describe_certificate(CertificateArn=cert_arn)
 
