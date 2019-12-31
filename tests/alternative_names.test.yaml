@@ -1,0 +1,9 @@
+test_metadata:
+  type: config
+  name: alternative_names
+  description: test for alternative names
+
+
+alternative_names:
+  - test.com
+  - api.test.com
