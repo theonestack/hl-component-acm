@@ -82,29 +82,33 @@ class AwsAcmCertValidatorLogic:
         if len(hosted_zone['HostedZones']) == 0:
             raise Exception(f"Zone {dns_zone} is not managed via Route53 in this AWS Account")
         hosted_zone_id = hosted_zone['HostedZones'][0]['Id']
-
-        update_request = {
-            'Comment': f"Remove certification validation for {domain}",
-            'Changes': [
-                {
-                    'Action': 'DELETE',
-                    'ResourceRecordSet': {
-                        'Name': dns_record['Name'],
-                        'Type': dns_record['Type'],
-                        'TTL': 60,
-                        'ResourceRecords': [{
-                            'Value': dns_record['Value']
-                        }],
-                    }
-                },
-            ]
-        }
-        print(update_request)
-        route53.change_resource_record_sets(
-            HostedZoneId=hosted_zone_id,
-            ChangeBatch=update_request
-        )
-
+        record = route53.list_resource_record_sets(HostedZoneId=hosted_zone_id,StartRecordName=dns_record['Name'],MaxItems='1')
+        # Check record value matches
+        if dns_record['Value'] in record:
+            update_request = {
+                'Comment': f"Remove certification validation for {domain}",
+                'Changes': [
+                    {
+                        'Action': 'DELETE',
+                        'ResourceRecordSet': {
+                            'Name': dns_record['Name'],
+                            'Type': dns_record['Type'],
+                            'TTL': record['ResourceRecordSets'][0]['TTL'],
+                            'ResourceRecords': [{
+                                'Value': dns_record['Value']
+                            }],
+                        }
+                    },
+                ]
+            }
+            print(update_request)
+            route53.change_resource_record_sets(
+                HostedZoneId=hosted_zone_id,
+                ChangeBatch=update_request
+            )
+        else:
+          print('Record not found assuming it has already been deleted :-)')  
+         
     def _create_route53_record(self, dns_record, validated_domain, dns_zone):
         route53 = boto3.client('route53', region_name=self.region)
         hosted_zone = route53.list_hosted_zones_by_name(
