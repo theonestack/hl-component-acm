@@ -84,7 +84,7 @@ class AwsAcmCertValidatorLogic:
         hosted_zone_id = hosted_zone['HostedZones'][0]['Id']
         record = route53.list_resource_record_sets(HostedZoneId=hosted_zone_id,StartRecordName=dns_record['Name'],MaxItems='1')
         # Check record value matches
-        if dns_record['Value'] in record:
+        if dns_record['Value'] in str(record):
             update_request = {
                 'Comment': f"Remove certification validation for {domain}",
                 'Changes': [
@@ -107,7 +107,7 @@ class AwsAcmCertValidatorLogic:
                 ChangeBatch=update_request
             )
         else:
-          print('Record not found assuming it has already been deleted :-)')  
+          print(dns_record['value'] + ' Record not found in '+record['ResourceRecordSets'][' assuming it has already been deleted :-)')  
          
     def _create_route53_record(self, dns_record, validated_domain, dns_zone):
         route53 = boto3.client('route53', region_name=self.region)
