@@ -107,7 +107,7 @@ class AwsAcmCertValidatorLogic:
                 ChangeBatch=update_request
             )
         else:
-          print(dns_record['value'] + ' Record not found in '+record['ResourceRecordSets']+' assuming it has already been deleted :-)')  
+          print(dns_record['Value'] + '- Record not found, assuming it has already been deleted :-)')  
          
     def _create_route53_record(self, dns_record, validated_domain, dns_zone):
         route53 = boto3.client('route53', region_name=self.region)
