@@ -22,6 +22,9 @@ CloudFormation do
     Property 'Tags', cert_tags
   end
 
-  Output("CertificateArn") { Value(Ref('ACMCertificate')) }
+  Output("CertificateArn") {
+    Value(Ref('ACMCertificate'))
+    Export(FnSub("${EnvironmentName}-#{external_parameters[:component_name]}-cert-arn"))
+  }
 
 end
