@@ -19,7 +19,7 @@ acm_custom_resources:
     CertificateValidatorCR:
       code: acm_certificate_validator_cr.py
       handler: acm_certificate_validator_cr.handler
-      runtime: python3.8
+      runtime: python3.11
       timeout: 600
       role: CertificateValidatorResource
       environment:
