@@ -36,8 +36,9 @@ def handler(event, context):
         if request_type == 'Update':
             # check if domain name is the same
             existing_domain_name = event['OldResourceProperties']['DomainName']
+            existing_alternative_names = event['OldResourceProperties']['AlternativeNames']
 
-            if existing_domain_name != domain_name:
+            if existing_domain_name != domain_name or existing_alternative_names != alternative_names:
                 # issue new certificate with new physical id
                 issue_validate_cert_respond(domain_name, alternative_names, event, context)
                 return
